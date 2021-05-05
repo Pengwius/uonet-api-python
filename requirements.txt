@@ -1,0 +1,6 @@
+beautifulsoup4
+bs4
+requests
+cryptography
+fastapi
+uvicorn

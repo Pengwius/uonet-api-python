@@ -2,17 +2,18 @@ from fastapi import FastAPI
 import json
 import requests
 from cryptography.fernet import Fernet
+from datetime import datetime
+import models
 
 #api
 from api.login import sender
 
-#models
-from models.LoginModel import LoginModel
-
 app = FastAPI()
 
+SESSION_EXPIRES_TIME = 1200
+
 @app.post("/login/")
-async def login(data: LoginModel):
+async def login(data: models.LoginModel):
     loginName = data.login
     Password = data.password
     symbol = data.symbol
@@ -28,8 +29,27 @@ async def login(data: LoginModel):
             'success': False
         }
     else:
+        key = Fernet.generate_key().decode('utf-8')
         session_key = Fernet.generate_key().decode('utf-8')
-        rkey = Fernet(bytes(session_key, 'utf-8'))
+
+        user = {
+            "key": key,
+            "expiration_date": datetime.now().timestamp()+SESSION_EXPIRES_TIME
+        }
+
+        f = open("db.json", "r")
+        db = f.read()
+        f.close()
+
+        db_json = json.loads(db)
+        db_json["users"].update({session_key: user})
+
+        f = open("db.json", "w")
+        json.dump(db_json, f)
+        f.close()
+
+
+        rkey = Fernet(bytes(key, 'utf-8'))
             
         sender_return['s'] = json.dumps(sender_return['s'])
         sender_return['s'] = sender_return['s'].encode()

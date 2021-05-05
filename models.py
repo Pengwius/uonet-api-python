@@ -5,3 +5,7 @@ class LoginModel(BaseModel):
     password: str
     symbol: str
     journal: str
+
+class UserModel(BaseModel):
+    expiration_date: float
+    key: bytes

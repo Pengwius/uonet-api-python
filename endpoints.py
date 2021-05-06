@@ -1,9 +1,11 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Response, Request, HTTPException
+from fastapi.responses import JSONResponse
 import json
 import requests
 from cryptography.fernet import Fernet
 from datetime import datetime
 import models
+import authentication
 
 #api
 from api.login import sender
@@ -48,7 +50,7 @@ async def login(data: models.LoginModel):
         json.dump(db_json, f)
         f.close()
 
-
+        
         rkey = Fernet(bytes(key, 'utf-8'))
             
         sender_return['s'] = json.dumps(sender_return['s'])
@@ -56,4 +58,18 @@ async def login(data: models.LoginModel):
         sender_return['s'] = rkey.encrypt(sender_return['s'])
         sender_return['s'] = sender_return['s'].decode('utf-8')
         data_response = {'success': True, 'data': sender_return}
-    return data_response
+        response = JSONResponse(content=data_response)
+        response.set_cookie(key="sessionkey", value=session_key)
+    return response
+
+@app.post("/grades/")
+async def grades(request: Request):
+    auth = authentication.authenticate(request)
+    if auth["status_code"] == 200:
+        return await request.json()
+    else:
+        raise HTTPException(
+            status_code=auth["status_code"],
+            detail=auth["details"]
+        )
+    

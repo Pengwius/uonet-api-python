@@ -86,8 +86,6 @@ async def grades(request: Request):
             'Connection': 'keep-alive',
             "User-Agent": "wulkanowy-api-python"
         }
-
-        print(student)
         
         grades = _post(f"{school_url}/Oceny.mvc/Get", headers, cookies, {'okres': register_id}, student)
 
@@ -97,4 +95,36 @@ async def grades(request: Request):
             status_code=auth["status_code"],
             detail=auth["details"]
         )
-    
+
+@app.post("/homeworks/")
+async def homeworks(request: Request):
+    auth = authentication.authenticate(request)
+    if auth["status_code"] == 200:
+        body = await request.json()
+
+        register_id = body["register_id"]
+        school_url = body["school_url"]
+        student = body["student"]
+        date = body["date"]
+        school_year = body["school_year"]
+        cookies = bytes(body["cookies"], "utf-8")
+
+        sessionkey = request.cookies.get("sessionkey")
+
+        cookies = decode_cookies(cookies, sessionkey)
+
+        headers = {
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Accept': '*/*',
+            'Connection': 'keep-alive',
+            "User-Agent": "wulkanowy-api-python"
+        }
+        
+        homeworks = _post(f"{school_url}/Homework.mvc/Get", headers, cookies, {'schoolYear': school_year, 'date': date, 'statusFilter': '-1'}, student)
+
+        return homeworks
+    else:
+        raise HTTPException(
+            status_code=auth["status_code"],
+            detail=auth["details"]
+        )

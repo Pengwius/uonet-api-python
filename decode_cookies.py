@@ -7,8 +7,6 @@ def decode_cookies(cookies: bytes, sessionkey: str):
     
     key = db["users"][sessionkey]["key"]
 
-    print(key)
-
     rkey = Fernet(key)
 
     cookies = rkey.decrypt(cookies)

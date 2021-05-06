@@ -160,3 +160,36 @@ async def timetable(request: Request):
             status_code=auth["status_code"],
             detail=auth["details"]
         )
+
+@app.post("/exams/")
+async def exams(request: Request):
+    auth = authentication.authenticate(request)
+    if auth["status_code"] == 200:
+        body = await request.json()
+
+        register_id = body["register_id"]
+        school_url = body["school_url"]
+        student = body["student"]
+        date = body["date"]
+        school_year = body["school_year"]
+        cookies = bytes(body["cookies"], "utf-8")
+
+        sessionkey = request.cookies.get("sessionkey")
+
+        cookies = decode_cookies(cookies, sessionkey)
+
+        headers = {
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Accept': '*/*',
+            'Connection': 'keep-alive',
+            "User-Agent": "wulkanowy-api-python"
+        }
+        
+        exams = _post(f"{school_url}/Sprawdziany.mvc/Get", headers, cookies, {'data': date, 'rokSzkolny': school_year}, student)
+
+        return exams
+    else:
+        raise HTTPException(
+            status_code=auth["status_code"],
+            detail=auth["details"]
+        )

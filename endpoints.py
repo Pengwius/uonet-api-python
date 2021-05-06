@@ -6,9 +6,11 @@ from cryptography.fernet import Fernet
 from datetime import datetime
 import models
 import authentication
+from decode_cookies import decode_cookies
 
 #api
 from api.login import sender
+from api.request import _post
 
 app = FastAPI()
 
@@ -60,13 +62,36 @@ async def login(data: models.LoginModel):
         data_response = {'success': True, 'data': sender_return}
         response = JSONResponse(content=data_response)
         response.set_cookie(key="sessionkey", value=session_key)
+
     return response
 
 @app.post("/grades/")
 async def grades(request: Request):
     auth = authentication.authenticate(request)
     if auth["status_code"] == 200:
-        return await request.json()
+        body = await request.json()
+
+        register_id = body["register_id"]
+        school_url = body["school_url"]
+        student = body["student"]
+        cookies = bytes(body["cookies"], "utf-8")
+
+        sessionkey = request.cookies.get("sessionkey")
+
+        cookies = decode_cookies(cookies, sessionkey)
+
+        headers = {
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Accept': '*/*',
+            'Connection': 'keep-alive',
+            "User-Agent": "wulkanowy-api-python"
+        }
+
+        print(student)
+        
+        grades = _post(f"{school_url}/Oceny.mvc/Get", headers, cookies, {'okres': register_id}, student)
+
+        return grades
     else:
         raise HTTPException(
             status_code=auth["status_code"],

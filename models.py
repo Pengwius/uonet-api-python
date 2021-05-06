@@ -11,9 +11,3 @@ class LoginModel(BaseModel):
 class UserModel(BaseModel):
     expiration_date: float
     key: bytes
-
-class RequestBodyModel(BaseModel):
-    register_id: int
-    school_url: str
-    student: dict
-    cookies: str
